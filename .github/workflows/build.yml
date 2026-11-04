@@ -1,0 +1,37 @@
+name: Compilar Entonador Vocal
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+            extra: ""
+          - os: macos-latest
+            name: macOS
+            extra: "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release "${{ matrix.extra }}"
+
+      - name: Compilar
+        run: cmake --build build --config Release --parallel
+
+      - name: Subir el plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: Entonador-${{ matrix.name }}
+          path: |
+            build/Entonador_artefacts/Release/VST3
+            build/Entonador_artefacts/Release/Standalone
+          if-no-files-found: error
